@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=mpl123 Audio Player
+Name[fr]=Lecteur audio mpl123
+Exec=mpl123
+Terminal=true
+Icon=mpl123
+Categories=AudioVideo;
