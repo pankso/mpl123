@@ -1,4 +1,4 @@
 mpl123
 ======
 
-A tiny mpg123 Ncurses dialog frontend
+Music Player 123 - A tiny mpg123 Ncurses dialog frontend
