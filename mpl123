@@ -9,22 +9,25 @@ config="$HOME/.config/mpl123"
 [ -f "$config/mpl123.conf" ] && . ${config}/mpl123.conf
 [ -f "./mpl123.conf" ] && . ./mpl123.conf
 
+#
 # TODO: Handle playlist
-
-MUSIC="../mpl123-music"
+#
 
 # Internal variables
 name="$(basename $0)"
-playlist="$HOME/.config/$name/playlist.m3u"
 title="{ $name }"
 tmpdir="/tmp/$name"
 tmpfile="$tmpdir/$$"
 height="20"
 width="72"
 
+# Last playlist
+playlist="$HOME/.config/$name/playlist.m3u"
+
 # Initialize
 mkdir -p ${tmpdir} ${config}
 [ -f "$config/$name.conf" ] || cp /etc/${name}.conf ${config}
+touch ${playlist}
 
 #
 # Functions
@@ -37,13 +40,26 @@ boldify() {
 
 header() {
 	clear
-	boldify "mpl123 - Audio Player"
+	echo "$(boldify 'mpl123 - Audio Player') (Ctrl+C to quit)"
 	echo "========================================================================"
 }
 
 exit_player() {
-	[ "$(pidof mpg123)" ] && killall mpg123
+	#[ "$(pidof mpg123)" ] && killall mpg123
 	rm -rf ${tmpdir} && exit 0
+}
+
+read_continue() {
+	echo ""
+	echo -n "Press ENTER to continue..."; read
+}
+
+check_music() {
+	count=$(ls ${MUSIC}/*.* 2>/dev/null| wc -l)
+	if [ "$count" == 0 ]; then
+		gettext "No music found in:"; echo " $MUSIC"
+		read_continue && return 0
+	fi
 }
 
 list_tracks() {
@@ -57,11 +73,27 @@ list_tracks() {
 # Usage: play_track "track.mp3"
 play_track() {
 	local track="$1"
-	echo "$(boldify $(gettext 'track >')) $track"
-	mpg123 -q -C "$track"
+	echo "$(boldify '>') $track"
+	mpg123 -q "$track"
+}
+
+# Usage: play_list "list.m3u"
+play_list() {
+	local list="$1"
+	count=$(cat $playlist | wc -l)
+	header
+	if [ "$count" == 0 ]; then
+		gettext "Playlist is empty:"; echo " $playlist"
+		read_continue && return 0
+	fi
+	cat $list | while read track
+	do
+		play_track "$track"
+	done
 }
 
 play_all() {
+	check_music
 	header && cd ${MUSIC}
 	for track in *.*
 	do
@@ -69,16 +101,9 @@ play_all() {
 	done
 }
 
-radio_switch() {
-	if [ "$(pidof mpg123)" ]; then 
-		killall mpg123
-	else 
-		mpg123 -q -C http://"$RADIO" &
-	fi
-}
-
 # Browse audio tracks
 browse_tracks() {
+	check_music
 	cd ${MUSIC}
 	dialog \
 		--clear --title "$title" \
@@ -93,6 +118,15 @@ $(list_tracks) 2> ${tmpfile}
 	esac
 }
 
+radio_switch() {
+	gettext "Connecting to:"; echo " $RADIO"
+	if [ "$(pidof mpg123)" ]; then 
+		killall mpg123
+	else 
+		mpg123 -q http://"$RADIO" &
+	fi
+}
+
 # Main Dialog menu
 main_box() {
 	volume=$(amixer get Master | egrep -o "[0-9]+%")
@@ -101,6 +135,7 @@ main_box() {
 		--cancel-label "Quit" \
 		--menu "\nMusic: $MUSIC - Volume $volume" ${height} ${width} 14 \
 "browse"	"$(gettext 'Browse all tracks')" \
+"playlist"	"$(gettext 'Listen to last playlist')" \
 "playall"	"$(gettext 'Play all tracks')" \
 "radio"		"$(gettext 'Turn on/off radio')" \
 "mixer"		"$(gettext 'Audio mixer')" 2> ${tmpfile}
@@ -114,7 +149,7 @@ main_box() {
 	action=$(cat $tmpfile)
 	case "$action" in
 		browse) browse_tracks ;;
-		playlist) play_list ;;
+		playlist) play_list ${playlist} ;;
 		playall) play_all ;;
 		radio) radio_switch ;;
 		mixer) ${MIXER} ;;
