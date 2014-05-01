@@ -1,0 +1,127 @@
+#!/bin/sh
+#
+# mpl123 - Small frontend to mpg123 using Ncurses dialog boxes.
+#
+# Copyright (C) 2014 Christophe Lincoln - BSD License
+#
+config="$HOME/.config/mpl123"
+[ -f "/etc/mpl123.conf" ] && . /etc/mpl123.conf
+[ -f "$config/mpl123.conf" ] && . ${config}/mpl123.conf
+[ -f "./mpl123.conf" ] && . ./mpl123.conf
+
+# TODO: Handle playlist
+
+MUSIC="../mpl123-music"
+
+# Internal variables
+name="$(basename $0)"
+playlist="$HOME/.config/$name/playlist.m3u"
+title="{ $name }"
+tmpdir="/tmp/$name"
+tmpfile="$tmpdir/$$"
+height="20"
+width="72"
+
+# Initialize
+mkdir -p ${tmpdir} ${config}
+[ -f "$config/$name.conf" ] || cp /etc/${name}.conf ${config}
+
+#
+# Functions
+#
+
+# Usage: boldify "Message..."
+boldify() { 
+	echo -e "\033[1m$@\033[0m"
+}
+
+header() {
+	clear
+	boldify "mpl123 - Audio Player"
+	echo "========================================================================"
+}
+
+exit_player() {
+	[ "$(pidof mpg123)" ] && killall mpg123
+	rm -rf ${tmpdir} && exit 0
+}
+
+list_tracks() {
+	for track in *.*
+	do
+		size=$(du -sh $track | awk '{print $1}')
+		echo -e "$track" "$size\n" 
+	done
+}
+
+# Usage: play_track "track.mp3"
+play_track() {
+	local track="$1"
+	echo "$(boldify $(gettext 'track >')) $track"
+	mpg123 -q -C "$track"
+}
+
+play_all() {
+	header && cd ${MUSIC}
+	for track in *.*
+	do
+		play_track "$track"
+	done
+}
+
+radio_switch() {
+	if [ "$(pidof mpg123)" ]; then 
+		killall mpg123
+	else 
+		mpg123 -q -C http://"$RADIO" &
+	fi
+}
+
+# Browse audio tracks
+browse_tracks() {
+	cd ${MUSIC}
+	dialog \
+		--clear --title "$title" \
+		--cancel-label "Menu" \
+		--menu "\nListing: $MUSIC" ${height} ${width} 14 \
+$(list_tracks) 2> ${tmpfile}
+	
+	# Handle options
+	case "$?" in
+		1|255) continue ;;
+		0) play_track "$(cat $tmpfile)" ;;
+	esac
+}
+
+# Main Dialog menu
+main_box() {
+	volume=$(amixer get Master | egrep -o "[0-9]+%")
+	dialog \
+		--clear --title "$title" \
+		--cancel-label "Quit" \
+		--menu "\nMusic: $MUSIC - Volume $volume" ${height} ${width} 14 \
+"browse"	"$(gettext 'Browse all tracks')" \
+"playall"	"$(gettext 'Play all tracks')" \
+"radio"		"$(gettext 'Turn on/off radio')" \
+"mixer"		"$(gettext 'Audio mixer')" 2> ${tmpfile}
+	
+	# Handle options
+	case "$?" in
+		1|255) exit_player ;;
+	esac
+	
+	# Handle actions
+	action=$(cat $tmpfile)
+	case "$action" in
+		browse) browse_tracks ;;
+		playlist) play_list ;;
+		playall) play_all ;;
+		radio) radio_switch ;;
+		mixer) ${MIXER} ;;
+	esac
+}
+
+# Main mpl123 loop
+while true; do
+	main_box
+done && exit 0
