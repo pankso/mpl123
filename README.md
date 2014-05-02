@@ -12,7 +12,8 @@ Features
 ========
 
   * Play a single audio track :-)
-  * Play all track of a folder
+  * Play all tracks in a folder
+  * Listen to a playlist
   * Listen to an online radio
 
 Dependencies
