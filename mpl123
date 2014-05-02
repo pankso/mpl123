@@ -9,10 +9,6 @@ config="$HOME/.config/mpl123"
 [ -f "$config/mpl123.conf" ] && . ${config}/mpl123.conf
 [ -f "./mpl123.conf" ] && . ./mpl123.conf
 
-#
-# TODO: Handle playlist
-#
-
 # Internal variables
 name="$(basename $0)"
 title="{ $name }"
@@ -32,6 +28,22 @@ touch ${playlist}
 #
 # Functions
 #
+
+usage() {
+	cat << EOT
+
+$(boldify "Usage:") $(basename $0) [command|playlist.m3u]
+
+$(boldify "Commands:")
+  usage    $(gettext "Display this short usage")
+  radio    $(gettext "Turn on/off web radio")
+
+$(boldify "Examples:")
+  $name Music/playlists/rock.m3u
+  $name radio
+
+EOT
+}
 
 # Usage: boldify "Message..."
 boldify() { 
@@ -54,38 +66,36 @@ read_continue() {
 	echo -n "Press ENTER to continue..."; read
 }
 
-check_music() {
-	count=$(ls ${MUSIC}/*.* 2>/dev/null| wc -l)
-	if [ "$count" == 0 ]; then
-		gettext "No music found in:"; echo " $MUSIC"
-		read_continue && return 0
-	fi
-}
-
-list_tracks() {
-	for track in *.*
-	do
-		size=$(du -sh $track | awk '{print $1}')
-		echo -e "$track" "$size\n" 
-	done
+# Usage: edit_box "path/to/file"
+edit_box() {
+	local file="$1"
+	dialog \
+		--clear --title "{ mpl123 Editor }" \
+		--ok-label "$(gettext 'Save')" \
+		--editbox "$file" ${height} ${width} 2> ${tmpfile}
+	case "$?" in
+		1|255) continue ;;
+		0) cat ${tmpfile} > ${file} ;;
+	esac
 }
 
 # Usage: play_track "track.mp3"
 play_track() {
 	local track="$1"
-	echo "$(boldify '>') $track"
+	echo "Playing: $(basename "$track")"
 	mpg123 -q "$track"
 }
 
 # Usage: play_list "list.m3u"
 play_list() {
 	local list="$1"
-	count=$(cat $playlist | wc -l)
+	count=$(cat $list | wc -l)
 	header
 	if [ "$count" == 0 ]; then
-		gettext "Playlist is empty:"; echo " $playlist"
+		gettext "Playlist is empty:"; echo " $list"
 		read_continue && return 0
 	fi
+	sed -i "/^$/"d ${list}
 	cat $list | while read track
 	do
 		play_track "$track"
@@ -93,29 +103,8 @@ play_list() {
 }
 
 play_all() {
-	check_music
 	header && cd ${MUSIC}
-	for track in *.*
-	do
-		play_track "$track"
-	done
-}
-
-# Browse audio tracks
-browse_tracks() {
-	check_music
-	cd ${MUSIC}
-	dialog \
-		--clear --title "$title" \
-		--cancel-label "Menu" \
-		--menu "\nListing: $MUSIC" ${height} ${width} 14 \
-$(list_tracks) 2> ${tmpfile}
-	
-	# Handle options
-	case "$?" in
-		1|255) continue ;;
-		0) play_track "$(cat $tmpfile)" ;;
-	esac
+	find . -name "*.mp3" | mpg123 -Z --list - 2>&1 | grep "^Playing"
 }
 
 radio_switch() {
@@ -134,11 +123,12 @@ main_box() {
 		--clear --title "$title" \
 		--cancel-label "Quit" \
 		--menu "\nMusic: $MUSIC - Volume $volume" ${height} ${width} 14 \
-"browse"	"$(gettext 'Browse all tracks')" \
+"playall"	"$(gettext 'Random play of all tracks')" \
 "playlist"	"$(gettext 'Listen to last playlist')" \
-"playall"	"$(gettext 'Play all tracks')" \
 "radio"		"$(gettext 'Turn on/off radio')" \
-"mixer"		"$(gettext 'Audio mixer')" 2> ${tmpfile}
+"mixer"		"$(gettext 'Audio mixer')" \
+"editlist"	"$(gettext 'Edit default playlist')" \
+"settings"	"$(gettext 'Edit mpl123 settings')" 2> ${tmpfile}
 	
 	# Handle options
 	case "$?" in
@@ -148,11 +138,12 @@ main_box() {
 	# Handle actions
 	action=$(cat $tmpfile)
 	case "$action" in
-		browse) browse_tracks ;;
 		playlist) play_list ${playlist} ;;
 		playall) play_all ;;
 		radio) radio_switch ;;
 		mixer) ${MIXER} ;;
+		editlist) edit_box ${playlist} ;;
+		settings) edit_box ${config}/mpl123.conf ;;
 	esac
 }
 
@@ -161,15 +152,16 @@ main_box() {
 #
 
 case "$1" in
-
+		
 	*.m3u)
+		[ -f "$1" ] || exit 1
 		play_list "$1" ;;
 
 	radio)
 		radio_switch ;;
 
-	*help)
-		gettext "Usage: $(basename $0) [radio|playlist.m3u]"; echo ;;
+	*usage)
+		usage ;;
 	
 	*)
 		# Main mpl123 loop

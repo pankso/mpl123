@@ -11,10 +11,10 @@ IR key plugged into the computer.
 Features
 ========
 
-  * Play a single audio track :-)
-  * Play all tracks in a folder
-  * Listen to a playlist
+  * Random play of all tracks
+  * Play all tracks from a playlist
   * Listen to an online radio
+  * Edit configuration files
 
 Dependencies
 ============
@@ -34,10 +34,11 @@ DESTDIR and PREFIX are supported for packaging:
 
 Configuration
 =============
-For now, configuration must be done by editind the configuration file.
+For now, configuration must be done by editing the configuration file with
+the built-in editor or your favorite text editor.
 
-The system wide configuration file is: /etc/mpl123.conf
-Peer user config files (with playlist): ~/.config/mpl123/*
+The system wide configuration file is : /etc/mpl123.conf
+Peer user config files with playlist  : ~/.config/mpl123/*
 
 Cmdline usage
 =============
