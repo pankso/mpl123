@@ -26,11 +26,11 @@ Installation
 mpl123 installation can be done with a few cp commands or with a single
 make command:
 
-# make install
+> make install
 
 DESTDIR and PREFIX are supported for packaging:
 
-# make DESTDIR=$PWD/_pkg install
+> make DESTDIR=$PWD/_pkg install
 
 Configuration
 =============
