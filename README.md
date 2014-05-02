@@ -37,8 +37,13 @@ Configuration
 For now, configuration must be done by editing the configuration file with
 the built-in editor or your favorite text editor.
 
-The system wide configuration file is : /etc/mpl123.conf
-Peer user config files with playlist  : ~/.config/mpl123/*
+The system wide configuration file is:
+
+> /etc/mpl123.conf
+
+Peer user config files with playlist:
+
+> ~/.config/mpl123/*
 
 Cmdline usage
 =============
