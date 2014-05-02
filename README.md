@@ -39,6 +39,14 @@ For now, configuration must be done by editind the configuration file.
 The system wide configuration file is: /etc/mpl123.conf
 Peer user config files (with playlist): ~/.config/mpl123/*
 
+Cmdline usage
+=============
+mpl123 handle a few commands line options:
+
+  * usage         : Display a small help
+  * playlist.m3u  : Play the specified playlist
+  * radio         : Turn on/off web radio
+
 Maintainer
 ==========
 Christophe Lincoln <pankso@slitaz.org>

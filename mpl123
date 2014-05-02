@@ -156,7 +156,26 @@ main_box() {
 	esac
 }
 
-# Main mpl123 loop
-while true; do
-	main_box
-done && exit 0
+#
+# Handle commands
+#
+
+case "$1" in
+
+	*.m3u)
+		play_list "$1" ;;
+
+	radio)
+		radio_switch ;;
+
+	*help)
+		gettext "Usage: $(basename $0) [radio|playlist.m3u]"; echo ;;
+	
+	*)
+		# Main mpl123 loop
+		while true; do
+			main_box
+		done ;;
+esac
+
+exit 0
