@@ -118,11 +118,12 @@ radio_switch() {
 
 # Main Dialog menu
 main_box() {
-	volume=$(amixer get Master | egrep -o "[0-9]+%")
+	# Note portable
+	#volume=$(amixer get Master | egrep -o "[0-9]+%")
 	dialog \
 		--clear --title "$title" \
 		--cancel-label "Quit" \
-		--menu "\nMusic: $MUSIC - Volume $volume" ${height} ${width} 14 \
+		--menu "\nMusic: $MUSIC" ${height} ${width} 14 \
 "playall"	"$(gettext 'Random play of all tracks')" \
 "playlist"	"$(gettext 'Listen to last playlist')" \
 "radio"		"$(gettext 'Turn on/off radio')" \
