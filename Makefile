@@ -16,6 +16,7 @@ all:
 install:
 	install -m 0755 -D $(PACKAGE) $(BINDIR)/$(PACKAGE)
 	install -m 0644 -D $(PACKAGE).conf $(SYSCONF)/$(PACKAGE).conf
+	install -m 0644 -D data/radiolist.txt $(DATADIR)/$(PACKAGE)/radiolist.txt
 	install -m 0644 -D data/$(PACKAGE).desktop $(XDGAPPS)/$(PACKAGE).desktop
 	install -m 0644 -D data/$(PACKAGE).png $(PIXMAPS)/$(PACKAGE).png
 

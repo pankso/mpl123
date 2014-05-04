@@ -1,0 +1,12 @@
+http://streaming.radionomy.com/all-smooth-jazz|Jazz
+http://streaming.radionomy.com/ABC-Lounge|Ambient
+http://streaming.radionomy.com/100-CHILL|Lounge 
+http://117.53.175.113:15018|Classic_Rock_915
+http://streaming.radionomy.com/4U-70s|Rock
+http://streaming.radionomy.com/The-Buffalo|Rock
+http://184.107.180.50:8200|Classic_shamfm.fm
+http://222.122.178.180:6212|Classical.24
+http://streaming.radionomy.com/CurveRadio|Dubstep
+http://72.13.86.4:8529|Dubstep_Sub.FM
+http://46.165.208.87:80|HipHop_BlackBeats.FM
+http://108.61.73.118:8054|HipHop_181.FM

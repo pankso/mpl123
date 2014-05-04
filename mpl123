@@ -17,8 +17,10 @@ tmpfile="$tmpdir/$$"
 height="20"
 width="72"
 
-# Last playlist
+# Last playlist nd radiolist
 playlist="$HOME/.config/$name/playlist.m3u"
+radiolist="/usr/share/$name/radiolist.txt"
+[ -f "$config/radiolist.txt" ] && radiolist="$config/radiolist.txt"
 
 # Initialize
 mkdir -p ${tmpdir} ${config}
@@ -53,7 +55,7 @@ boldify() {
 header() {
 	clear
 	echo "$(boldify 'mpl123 - Audio Player') (Ctrl+C to quit)"
-	echo "========================================================================"
+	echo "================================================================================"
 }
 
 exit_player() {
@@ -108,12 +110,41 @@ play_all() {
 }
 
 radio_switch() {
-	gettext "Connecting to:"; echo " $RADIO"
-	if [ "$(pidof mpg123)" ]; then 
+	[ "$1" == "reload" ] && killall mpg123 2>/dev/null && sleep 1
+	if [ "$(pidof mpg123)" ]; then
 		killall mpg123
-	else 
+	else
+		clear && gettext "Connecting to:"; boldify " $RADIO"
 		mpg123 -q http://"$RADIO" &
+		gettext "Press enter to continue..."; read -t 4
 	fi
+}
+
+radio_list() {
+	IFS="|"
+	cat $radiolist | while read radio info
+	do
+		[ "$info" ] || info="N/A"
+		echo -e "${radio#http://}" "$info\n"
+	done && unset IFS info
+}
+
+radio_list_box() {
+		dialog \
+		--clear --title "$title Radio" \
+		--cancel-label "Menu" \
+		--menu "\nList: $radiolist" ${height} ${width} 14 \
+$(radio_list) 2> ${tmpfile}
+	
+	# Handle options
+	case "$?" in
+		1|255) continue ;;
+		0)
+			radio="$(cat ${tmpfile})" 
+			sed -i s"#RADIO=.*#RADIO=\"$radio\"#" ${config}/mpl123.conf
+			. ${config}/mpl123.conf
+			radio_switch reload ;;
+	esac
 }
 
 # Main Dialog menu
@@ -124,12 +155,13 @@ main_box() {
 		--clear --title "$title" \
 		--cancel-label "Quit" \
 		--menu "\nMusic: $MUSIC" ${height} ${width} 14 \
-"playall"	"$(gettext 'Random play of all tracks')" \
-"playlist"	"$(gettext 'Listen to last playlist')" \
-"radio"		"$(gettext 'Turn on/off radio')" \
-"mixer"		"$(gettext 'Audio mixer')" \
-"editlist"	"$(gettext 'Edit default playlist')" \
-"settings"	"$(gettext 'Edit mpl123 settings')" 2> ${tmpfile}
+"playall"	  "$(gettext 'Random play of all tracks')" \
+"playlist"	  "$(gettext 'Listen to last playlist')" \
+"radio"		  "$(gettext 'Turn on/off web radio')" \
+"radiolist"   "$(gettext 'Select the radio station')" \
+"mixer"		  "$(gettext 'Audio mixer')" \
+"editlist"	  "$(gettext 'Edit default playlist')" \
+"settings"	  "$(gettext 'Edit mpl123 settings')" 2> ${tmpfile}
 	
 	# Handle options
 	case "$?" in
@@ -142,6 +174,7 @@ main_box() {
 		playlist) play_list ${playlist} ;;
 		playall) play_all ;;
 		radio) radio_switch ;;
+		radiolist) radio_list_box ;;
 		mixer) ${MIXER} ;;
 		editlist) edit_box ${playlist} ;;
 		settings) edit_box ${config}/mpl123.conf ;;
